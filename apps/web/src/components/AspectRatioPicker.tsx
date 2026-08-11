@@ -11,7 +11,7 @@ interface AspectRatioPickerProps {
 
 export function AspectRatioPicker({ value, onChange, disabled }: AspectRatioPickerProps) {
   return (
-    <div className="ratio-picker" role="group" aria-label="Aspect ratio">
+    <div className="ratio-picker" role="group" aria-label="Tỷ lệ khung hình" title="Tỷ lệ khung hình của trang mới">
       {RATIOS.map((ratio) => (
         <button
           key={ratio}
@@ -19,6 +19,7 @@ export function AspectRatioPicker({ value, onChange, disabled }: AspectRatioPick
           className={classNames("ratio-btn", { "ratio-btn-active": ratio === value })}
           onClick={() => onChange(ratio)}
           disabled={disabled}
+          aria-label={`Tỷ lệ ${ratio}`}
         >
           {ratio}
         </button>

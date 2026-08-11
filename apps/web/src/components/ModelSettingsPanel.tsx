@@ -11,15 +11,11 @@ interface ModelSettingsPanelProps {
   disabled: boolean;
 }
 
-/** Sentinel for the "type your own model id" option. Not a model id, and never sent anywhere. */
 const CUSTOM = "__custom__";
-
-/** Must match `.model-settings-panel`'s width in styles.css - used to keep the panel on-screen. */
 const PANEL_WIDTH = 320;
 
-/** Shown as the empty choice everywhere: leaving a control alone means the server decides. */
 function defaultLabel(current: string): string {
-  return current ? `Server default (${current})` : "Server default";
+  return current ? `Mặc định máy chủ (${current})` : "Mặc định máy chủ";
 }
 
 interface FieldProps {
@@ -51,11 +47,9 @@ function ProviderField({
       >
         <option value="">{defaultLabel(current)}</option>
         {options.map((option) => (
-          // A provider with no API key is offered but not selectable: the server would fall back and
-          // say so, which works, but stopping it here saves a pointless round trip.
           <option key={option.name} value={option.name} disabled={!option.available}>
             {option.label}
-            {option.available ? "" : " - no API key"}
+            {option.available ? "" : " - chưa có API key"}
           </option>
         ))}
       </select>
@@ -63,13 +57,6 @@ function ProviderField({
   );
 }
 
-/**
- * A model chooser: known ids in a dropdown, plus a free-text escape hatch.
- *
- * The escape hatch is the point, not a nicety - provider model ids change faster than the server's
- * catalog can track. A typed id that the provider rejects is not fatal: the server retries on its
- * configured default and reports it back as a notice.
- */
 function ModelField({
   label,
   models,
@@ -97,8 +84,6 @@ function ModelField({
           disabled={disabled}
           onChange={(e) => {
             if (e.target.value === CUSTOM) {
-              // Keep whatever is set until something is typed, so opening the box never silently
-              // clears a working choice.
               setCustomMode(true);
               return;
             }
@@ -112,14 +97,14 @@ function ModelField({
               {model}
             </option>
           ))}
-          <option value={CUSTOM}>Custom…</option>
+          <option value={CUSTOM}>Tùy chỉnh…</option>
         </select>
         {showCustom && (
           <input
             className="model-settings-input"
             type="text"
             value={typed ? value : ""}
-            placeholder="model id"
+            placeholder="ID model"
             spellCheck={false}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value || undefined)}
@@ -164,44 +149,20 @@ function ChoiceField({
   );
 }
 
-/**
- * Picks the image and video provider/model at runtime, instead of editing `config.yml` and
- * restarting the server.
- *
- * A disclosure panel rather than more inline controls: the toolbar already carries eight and wraps.
- * The choices are remembered in this browser and ride along with every generate request, so the
- * server itself stays stateless and two tabs can use different models.
- *
- * Only affects pages generated from now on. Pages already drawn keep the model that drew them -
- * re-rendering would mean paying for every page again.
- */
 export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: ModelSettingsPanelProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState({ top: 0, left: 0 });
 
-  /**
-   * The panel is positioned `fixed`, not `absolute`, and so needs explicit coordinates.
-   *
-   * `.browser-frame` sets `overflow: hidden` to keep its rounded corners clean, which clipped an
-   * absolutely-positioned panel at the frame's bottom edge - the last controls were unreachable.
-   * A fixed element is not clipped by a plain `overflow: hidden` ancestor, so it can hang below the
-   * frame. Kept on-screen by clamping against the viewport's right edge.
-   */
   const placeUnderButton = () => {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
     setAnchor({ top: rect.bottom + 8, left: Math.max(8, Math.min(rect.left, window.innerWidth - PANEL_WIDTH - 12)) });
   };
 
-  // Outside-click + Escape dismiss (shared with the other popovers).
   useDismiss(open, () => setOpen(false), rootRef);
 
-  // Reposition the fixed panel as the button under it moves. Separate from dismiss on purpose: the
-  // panel is `fixed`, so its coordinates freeze at open time. A resize, or a scroll of the internally
-  // scrolling `.browser-frame`, would otherwise strand it over unrelated content. Capture phase,
-  // because that internal scroll never bubbles to `window`.
   useEffect(() => {
     if (!open) return;
     window.addEventListener("resize", placeUnderButton);
@@ -212,36 +173,17 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
     };
   }, [open]);
 
-  // Nothing to offer until /api/config has answered - the same self-hiding rule ArtStylePicker uses
-  // rather than rendering an empty control.
   if (settings.image.providers.length === 0) return null;
 
   const update = <K extends keyof ModelPrefs>(key: K, value: ModelPrefs[K]) => onChange({ ...prefs, [key]: value });
 
-  /**
-   * A model id belongs to exactly one provider, so it cannot survive the provider changing under it.
-   * Left alone, picking OpenAI + `gpt-image-2` and then switching to fal sent `gpt-image-2` to fal
-   * on every request: a rejection, a fallback retry, and a notice, once per page, forever - while
-   * the panel still displayed the dead id in its Custom box as though it were in use.
-   *
-   * Only the model is cleared. The per-provider extras (image size, quality, Ark fallback) are read
-   * solely by the factory they belong to, so they stay valid and come back if the user switches back.
-   */
   const changeProvider = (providerKey: "image_provider" | "video_provider", modelKey: "image_model" | "video_model") =>
     (value: string | undefined) => onChange({ ...prefs, [providerKey]: value, [modelKey]: undefined });
 
   const changed = Object.keys(pruneEmptyPrefs(prefs)).length;
-
-  // Extras belong to one provider each, so they only appear when that provider is the one in use.
   const activeImageProvider = prefs.image_provider ?? settings.image.provider;
   const activeVideoProvider = prefs.video_provider ?? settings.video.provider;
 
-  /**
-   * The "Server default (…)" hint names a real model id, and that id belongs to the provider the
-   * SERVER is configured with. Once a different provider is picked, that id is not what leaving the
-   * model alone would use - the server would use the newly-picked provider's own configured model.
-   * So the hint is shown only while the picked provider still matches the server's.
-   */
   const defaultModelFor = (picked: string, serverProvider: string, serverModel: string): string =>
     picked === serverProvider ? serverModel : "";
 
@@ -255,17 +197,17 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
           if (!open) placeUnderButton();
           setOpen((v) => !v);
         }}
-        title="Choose the image and video model used for new pages"
+        title="Chọn nhà cung cấp và model dùng để tạo ảnh/video cho các trang mới"
         aria-expanded={open}
       >
-        ⚙ Models{changed > 0 ? ` (${changed})` : ""}
+        ⚙ Model{changed > 0 ? ` (${changed})` : ""}
       </button>
 
       {open && (
         <div className="model-settings-panel" style={{ top: anchor.top, left: anchor.left }}>
-          <p className="model-settings-title">Image</p>
+          <p className="model-settings-title">Ảnh</p>
           <ProviderField
-            label="Provider"
+            label="Nhà cung cấp"
             options={settings.image.providers}
             current={settings.image.provider}
             value={prefs.image_provider}
@@ -282,7 +224,7 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
           />
           {activeImageProvider === "gemini" && (
             <ChoiceField
-              label="Image size"
+              label="Kích thước ảnh"
               choices={settings.extras.geminiImageSizes}
               current={settings.extras.geminiImageSize}
               value={prefs.gemini_image_size}
@@ -292,7 +234,7 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
           )}
           {activeImageProvider === "openai" && (
             <ChoiceField
-              label="Quality"
+              label="Chất lượng"
               choices={settings.extras.openaiImageQualities}
               current={settings.extras.openaiImageQuality}
               value={prefs.openai_image_quality}
@@ -302,7 +244,7 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
           )}
           {activeImageProvider === "ark" && (
             <ModelField
-              label="Fallback model"
+              label="Model dự phòng"
               models={settings.image.providers.find((p) => p.name === "ark")?.models ?? []}
               current={settings.extras.arkFallbackModel}
               value={prefs.ark_fallback_model}
@@ -313,7 +255,7 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
 
           <p className="model-settings-title">Video</p>
           <ProviderField
-            label="Provider"
+            label="Nhà cung cấp"
             options={settings.video.providers}
             current={settings.video.provider}
             value={prefs.video_provider}
@@ -329,7 +271,7 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
             disabled={disabled}
           />
           <ChoiceField
-            label="Resolution"
+            label="Độ phân giải"
             choices={settings.video.resolutions}
             current={settings.video.resolution}
             value={prefs.video_resolution}
@@ -337,22 +279,16 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
             disabled={disabled}
           />
           <label className="model-settings-row">
-            <span className="model-settings-label">Seconds</span>
+            <span className="model-settings-label">Thời lượng (giây)</span>
             <input
               className="model-settings-input"
               type="number"
               min={1}
-              // `step` is not decoration: without it the spinner and validation both accept `5.5`,
-              // which is not a whole number of seconds and which the server drops on arrival. The
-              // control would then show a value that is not the one in effect.
               step={1}
               max={settings.video.maxDurationSeconds}
               placeholder={String(settings.video.durationSeconds)}
               value={prefs.video_duration_seconds ?? ""}
               disabled={disabled}
-              // Empty clears the override rather than sending 0, which the server rejects outright.
-              // Floored, not rounded: this number caps what a clip may spend, so it must never
-              // resolve upwards to more than the user typed.
               onChange={(e) => {
                 const n = Math.floor(Number(e.target.value));
                 update("video_duration_seconds", e.target.value === "" || !Number.isFinite(n) || n <= 0 ? undefined : n);
@@ -361,11 +297,11 @@ export function ModelSettingsPanel({ settings, prefs, onChange, disabled }: Mode
           </label>
 
           <p className="model-settings-note">
-            Applies to new pages only. Video is capped at {settings.video.maxDurationSeconds}s per request.
+            Chỉ áp dụng cho trang mới. Mỗi yêu cầu video tối đa {settings.video.maxDurationSeconds} giây.
           </p>
           <div className="model-settings-actions">
             <button type="button" className="toolbar-button" onClick={() => onChange({})} disabled={disabled || changed === 0}>
-              Reset to server defaults
+              Khôi phục mặc định máy chủ
             </button>
           </div>
         </div>

@@ -7,30 +7,31 @@ interface ArtStylePickerProps {
   disabled: boolean;
 }
 
-/**
- * Picks which block of art-style.md gets appended to the image prompt.
- * The list and the labels both come from the server, which parses them out of art-style.md
- * itself, so adding a style there makes it appear here with no client change.
- *
- * Only affects pages generated from now on. Existing pages keep the style they were drawn in -
- * there is no re-render, because that would mean paying for every page again.
- */
+const STYLE_LABELS_VI: Record<string, string> = {
+  felt: "Len nỉ",
+  papercut: "Cắt giấy",
+  riso: "In Risograph",
+  pixel: "Pixel",
+  editorial: "Minh họa biên tập",
+  tiltshift: "Tilt-shift",
+};
+
 export function ArtStylePicker({ styles, value, onChange, disabled }: ArtStylePickerProps) {
   if (styles.length < 2) return null;
 
   return (
     <label className="style-picker">
-      <span className="style-picker-caption">Style</span>
+      <span className="style-picker-caption">Phong cách</span>
       <select
         className="style-picker-select"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        title="Rendering style for pages generated from now on; pages already drawn keep their own"
+        title="Phong cách hiển thị cho các trang được tạo từ thời điểm này; trang đã tạo giữ nguyên"
       >
         {styles.map((style) => (
           <option key={style.name} value={style.name}>
-            {style.label}
+            {STYLE_LABELS_VI[style.name] ?? style.label}
           </option>
         ))}
       </select>

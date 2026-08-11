@@ -27,7 +27,7 @@ export function UploadButton({ sessionId, disabled, onUploaded, onError }: Uploa
       onUploaded(node);
     } catch (err) {
       console.error(err);
-      onError(err instanceof Error ? err.message : "Upload failed");
+      onError(err instanceof Error ? err.message : "Tải ảnh lên thất bại");
     } finally {
       setUploading(false);
     }
@@ -35,14 +35,15 @@ export function UploadButton({ sessionId, disabled, onUploaded, onError }: Uploa
 
   return (
     <>
-      <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleChange} />
+      <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleChange} aria-label="Chọn ảnh để tải lên" />
       <button
         type="button"
         className="toolbar-button"
         disabled={disabled || uploading}
         onClick={() => inputRef.current?.click()}
+        title="Bắt đầu một trang từ ảnh của bạn"
       >
-        {uploading ? "Uploading…" : "Upload photo"}
+        {uploading ? "Đang tải ảnh…" : "Tải ảnh lên"}
       </button>
     </>
   );

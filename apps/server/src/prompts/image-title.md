@@ -1,8 +1,8 @@
-The attached image was uploaded by a user to become a page in an infinite visual encyclopedia - a root page they can explore by tapping things in it.
+Ảnh đính kèm do người dùng tải lên để trở thành một trang gốc trong bách khoa toàn thư trực quan vô hạn; từ trang này họ có thể chạm vào các đối tượng để tiếp tục khám phá.
 
-Give it a short, specific title (4 words or fewer) naming the main subject, and a one-sentence description of its visual style (composition, palette, lighting) that could guide generating consistent follow-up pages.
+Hãy đặt một tiêu đề ngắn, cụ thể bằng TIẾNG VIỆT (tối đa 4 từ) nêu đúng chủ thể chính, đồng thời viết một câu mô tả phong cách thị giác của ảnh (bố cục, bảng màu, ánh sáng) để giúp các trang sinh tiếp theo giữ được tính nhất quán.
 
-Respond with strict JSON only, no markdown fences, no commentary:
+Chỉ trả về JSON hợp lệ, không markdown, không chú thích:
 
 ```json
 { "title": "string", "description": "string" }

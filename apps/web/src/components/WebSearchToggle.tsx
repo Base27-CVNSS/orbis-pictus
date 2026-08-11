@@ -14,8 +14,9 @@ export function WebSearchToggle({ enabled, onChange, disabled }: WebSearchToggle
       onClick={() => onChange(!enabled)}
       disabled={disabled}
       aria-pressed={enabled}
+      title="Dùng tìm kiếm web để làm căn cứ cho nội dung trang mới"
     >
-      Web search: {enabled ? "on" : "off"}
+      Tìm web: {enabled ? "bật" : "tắt"}
     </button>
   );
 }

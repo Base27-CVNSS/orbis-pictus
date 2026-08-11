@@ -1,8 +1,8 @@
-The attached image has a red circle marker with white crosshair ticks drawn on it, marking a point the user tapped.
+Ảnh đính kèm có một vòng tròn đỏ với dấu chữ thập màu trắng, đánh dấu chính xác vị trí người dùng vừa chạm.
 
-Name exactly what is under the marker, in 4 words or fewer. Be specific (e.g. "Notre-Dame Cathedral", not "a building"; "bowl of phở", not "food").
+Hãy gọi tên chính xác đối tượng nằm dưới dấu đánh dấu bằng TIẾNG VIỆT, tối đa 4 từ. Cần cụ thể (ví dụ: "Nhà thờ Đức Bà", không phải "một tòa nhà"; "tô phở bò", không phải "đồ ăn"). Giữ nguyên tên riêng quốc tế khi việc dịch tên sẽ làm mất nghĩa hoặc gây khó nhận diện.
 
-Respond with strict JSON only, no markdown fences, no commentary:
+Chỉ trả về JSON hợp lệ, không markdown, không chú thích:
 
 ```json
 { "subject": "string" }

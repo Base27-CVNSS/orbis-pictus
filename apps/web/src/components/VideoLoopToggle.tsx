@@ -5,50 +5,39 @@ interface VideoLoopToggleProps {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
   disabled: boolean;
-  /**
-   * The current page's clip state. The three cases are distinct and the difference matters:
-   * `undefined` = no page is open at all (the landing gallery), `null` = a page is open but has no
-   * clip and none is being made, and a real status = a page with a clip ready or on its way.
-   */
   status: VideoStatus | null | undefined;
 }
 
-/** Reports what the current page can actually offer, so switching the toggle on never leaves the
- *  user watching a static image with no explanation. Clips are only ever generated for a page at
- *  the moment it is created, and only while the server has video enabled - so most pages, all the
- *  older ones included, will honestly answer "none here". */
 function describe(enabled: boolean, status: VideoStatus | null | undefined): { label: string; title: string } {
   if (!enabled) {
     return {
-      label: "Live motion: off",
-      title: "Experimental: play a short looping motion clip on pages that have one, instead of a static image",
+      label: "Chuyển động: tắt",
+      title: "Thử nghiệm: phát đoạn chuyển động lặp ngắn trên những trang đã có video thay cho ảnh tĩnh",
     };
   }
-  // On the landing page there is no page to report on, so the toggle is just a preference for the
-  // pages opened from here - saying "none on this page" there reads as a fault when nothing is wrong.
   if (status === undefined) {
     return {
-      label: "Live motion: on",
-      title: "Experimental: pages that have a looping motion clip will play it instead of a static image",
+      label: "Chuyển động: bật",
+      title: "Những trang có đoạn chuyển động lặp sẽ tự phát thay cho ảnh tĩnh",
     };
   }
   switch (status) {
     case "ready":
-      return { label: "Live motion: on", title: "Playing this page's looping motion clip" };
+      return { label: "Chuyển động: bật", title: "Đang phát đoạn chuyển động lặp của trang này" };
     case "pending":
-      return { label: "Live motion: generating…", title: "This page's clip is still being generated - it will start playing on its own" };
+      return {
+        label: "Chuyển động: đang tạo…",
+        title: "Video của trang này đang được tạo và sẽ tự phát khi hoàn tất",
+      };
     default:
       return {
-        label: "Live motion: on (none on this page)",
+        label: "Chuyển động: bật (chưa có video)",
         title:
-          "No clip exists for this page yet. Use the “Generate video” button to make one now, or newly generated pages will get one automatically while this is on.",
+          "Trang này chưa có đoạn chuyển động. Hãy dùng nút “Tạo chuyển động” để tạo ngay; các trang mới sẽ tự tạo video khi tùy chọn này đang bật.",
       };
   }
 }
 
-/** Experimental, off by default. Plays a page's pre-generated looping motion clip - the original
- *  flipbook.page calls this "live video stream"; we label it "Live motion" since it loops a clip
- *  rather than streaming anything. */
 export function VideoLoopToggle({ enabled, onChange, disabled, status }: VideoLoopToggleProps) {
   const { label, title } = describe(enabled, status);
   const working = enabled && status === "pending";

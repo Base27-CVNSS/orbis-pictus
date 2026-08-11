@@ -3,45 +3,35 @@ import { useElapsedSeconds } from "../hooks/useElapsedSeconds";
 
 export interface GenerationProgressProps {
   stage?: GenerationStage;
-  /** Tap mode only: what the VLM named the tapped object. */
+  /** Chế độ chạm: tên đối tượng mà mô hình thị giác nhận diện được. */
   tapSubject?: string;
-  /** Known from the "drawing" stage onwards. */
+  /** Có từ giai đoạn vẽ trở đi. */
   pageTitle?: string;
-  /** Epoch ms the generation began; omitted for a variant re-render, which has no stream. */
+  /** Thời điểm bắt đầu sinh trang (epoch ms). */
   startedAt?: number;
 }
 
-/** A page takes tens of seconds, so the elapsed count only appears once the wait is long enough to
- *  need reassurance - showing "1s" immediately would make every generation feel slow. */
 const ELAPSED_AFTER_SECONDS = 8;
 
 function label(stage: GenerationStage | undefined, tapSubject: string | undefined, pageTitle: string | undefined): string {
   switch (stage) {
     case "searching":
-      return "Looking it up on the web";
+      return "Đang tra cứu thông tin trên web";
     case "authoring":
-      return tapSubject ? `Writing the page about ${tapSubject}` : "Writing the page";
+      return tapSubject ? `Đang soạn nội dung về ${tapSubject}` : "Đang soạn nội dung trang";
     case "drawing":
-      return pageTitle ? `Drawing ${pageTitle}` : "Drawing the page";
+      return pageTitle ? `Đang vẽ ${pageTitle}` : "Đang vẽ trang";
     default:
-      // Before the first stage event: in tap mode the VLM is still naming what was clicked, which
-      // is the one thing the user is actually curious about, so say that rather than "starting".
-      return tapSubject ? `Looking at ${tapSubject}` : "Starting";
+      return tapSubject ? `Đang nhận diện ${tapSubject}` : "Đang khởi tạo";
   }
 }
 
-/**
- * Replaces a single static "Generating…" pill with the phase the server is actually in. Every
- * value here already travels over the existing SSE stream - the client used to receive
- * and discard it. Nothing about this speeds a generation up; it just stops a 30-60 second wait from
- * looking like a frozen page.
- */
 export function GenerationProgress({ stage, tapSubject, pageTitle, startedAt }: GenerationProgressProps) {
   const elapsed = useElapsedSeconds(startedAt);
   const showElapsed = elapsed !== null && elapsed >= ELAPSED_AFTER_SECONDS;
 
   return (
-    <div className="generation-progress">
+    <div className="generation-progress" role="status" aria-live="polite">
       <span className="generation-progress-spinner" aria-hidden="true" />
       <span className="generation-progress-label">
         {label(stage, tapSubject, pageTitle)}
@@ -51,7 +41,7 @@ export function GenerationProgress({ stage, tapSubject, pageTitle, startedAt }: 
           <i />
         </span>
       </span>
-      {showElapsed && <span className="generation-progress-elapsed">{elapsed}s</span>}
+      {showElapsed && <span className="generation-progress-elapsed">{elapsed} giây</span>}
     </div>
   );
 }

@@ -3,21 +3,13 @@ import type { VersionSummary } from "@orbis/shared";
 import { useDismiss } from "../hooks/useDismiss";
 
 interface PageVersionsProps {
-  /** Every version of the current page, oldest first. The control hides when there are fewer than two. */
   versions: VersionSummary[];
-  /** The version currently on screen - highlighted, and never re-opened on click. */
   currentId: string | undefined;
-  /** Open an existing version. Swaps it into the current trail slot (a version is a lateral move, so
-   *  the breadcrumb does not grow); a one-step move plays the transition morph. */
   onOpen: (id: string) => void;
-  /** The star action: make this version the one the page opens by default. */
   onSetDefault: (id: string) => void;
-  /** Hidden mid-generation / mid-transition - same rationale as CachedTapMarkers. */
   hidden: boolean;
 }
 
-/** The git-branch glyph (Lucide-style). Marks the control that lists a page's edit versions. Shared
- *  with the gallery card's version badge (Landing.tsx), which draws it a touch heavier. */
 export function BranchIcon({ strokeWidth = 2 }: { strokeWidth?: number }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -29,7 +21,6 @@ export function BranchIcon({ strokeWidth = 2 }: { strokeWidth?: number }) {
   );
 }
 
-/** A five-point star. Filled (via CSS) when this version is the default. */
 function StarIcon() {
   return (
     <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -38,24 +29,11 @@ function StarIcon() {
   );
 }
 
-/**
- * The branch control for a page that has edit versions (see plans/PLAN-versions.md, shape B). An
- * icon button, top-right of the image, opens a popover listing every version of THIS page. Each row
- * opens that version (a one-step move, so the day<->night morph plays), and a star sets the version
- * that opens by default.
- *
- * Deliberately a sibling overlay, not part of the image: a click on the control never reaches the
- * image's tap handler, so the tap-anywhere -> VLM flow is untouched.
- */
 export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden }: PageVersionsProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Close on an outside click or Escape, only while open.
   useDismiss(open, () => setOpen(false), rootRef);
-
-  // A page with a single version has nothing to branch. Also hidden mid-generation / mid-transition,
-  // when the image underneath is not the one these versions belong to.
   if (hidden || versions.length < 2) return null;
 
   return (
@@ -64,8 +42,8 @@ export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden
         type="button"
         className="page-versions-button"
         aria-expanded={open}
-        aria-label="Versions of this page"
-        title="Versions of this page"
+        aria-label="Các phiên bản của trang"
+        title="Các phiên bản của trang"
         onClick={() => setOpen((v) => !v)}
       >
         <BranchIcon />
@@ -73,9 +51,9 @@ export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden
       </button>
 
       {open && (
-        <div className="page-versions-popover" role="menu">
+        <div className="page-versions-popover" role="menu" aria-label="Danh sách phiên bản">
           <div className="page-versions-head">
-            <p className="page-versions-eyebrow">Versions of this page</p>
+            <p className="page-versions-eyebrow">Các phiên bản của trang</p>
           </div>
           <div className="page-versions-list">
             {versions.map((v) => {
@@ -86,8 +64,6 @@ export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden
                     type="button"
                     className="page-version-open"
                     onClick={() => {
-                      // The on-screen version is already the current page; re-opening it would append
-                      // a duplicate to the trail. Just close in that case.
                       if (!onScreen) onOpen(v.id);
                       setOpen(false);
                     }}
@@ -97,16 +73,16 @@ export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden
                     </span>
                     <span className="page-version-text">
                       <span className="page-version-title">{v.page_title}</span>
-                      <span className="page-version-meta">{v.edit_command ?? "Original page"}</span>
+                      <span className="page-version-meta">{v.edit_command ?? "Trang gốc"}</span>
                     </span>
-                    {onScreen && <span className="page-version-current">On screen</span>}
+                    {onScreen && <span className="page-version-current">Đang hiển thị</span>}
                   </button>
                   <button
                     type="button"
                     className="page-version-star"
                     aria-pressed={v.is_default}
-                    aria-label={v.is_default ? "Opens by default" : "Open this version by default"}
-                    title={v.is_default ? "Opens by default" : "Open by default"}
+                    aria-label={v.is_default ? "Phiên bản mặc định" : "Đặt làm phiên bản mặc định"}
+                    title={v.is_default ? "Đang là mặc định" : "Đặt làm mặc định"}
                     onClick={() => onSetDefault(v.id)}
                   >
                     <StarIcon />
@@ -115,7 +91,7 @@ export function PageVersions({ versions, currentId, onOpen, onSetDefault, hidden
               );
             })}
           </div>
-          <p className="page-versions-foot">★ opens by default. The highlighted row is on screen now.</p>
+          <p className="page-versions-foot">★ là phiên bản mở mặc định. Dòng được tô sáng đang hiển thị.</p>
         </div>
       )}
     </div>
